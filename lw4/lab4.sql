@@ -5,7 +5,6 @@ ALTER TABLE room ADD FOREIGN KEY (id_room_category) REFERENCES room_category (id
 ALTER TABLE room_in_booking  ADD FOREIGN KEY (id_booking) REFERENCES booking (id_booking)
 ALTER TABLE room_in_booking  ADD FOREIGN KEY (id_room) REFERENCES room (id_room)
 
-
 -- 2. Выдать информацию о клиентах гостиницы “Космос”, проживающих в номерах категории “Люкс” на 1 апреля 2019г
 SELECT client.id_client, client.name, client.phone FROM client 
 INNER JOIN booking ON booking.id_client = client.id_client
@@ -14,7 +13,6 @@ INNER JOIN room ON room.id_room = room_in_booking.id_room
 INNER JOIN hotel ON hotel.id_hotel = room.id_hotel
 INNER JOIN room_category ON room_category.id_room_category = room.id_room_category
 WHERE hotel.name = 'Космос' AND room_category.name = 'Люкс' AND room_in_booking.checkin_date <= '2019-04-01' AND room_in_booking.checkout_date >= '2019-04-01'
-
 
 -- 3. Дать список свободных номеров всех гостиниц на 22 апреля
 SELECT room.id_room, room.id_hotel, room.id_room_category, room.number FROM room 
@@ -64,14 +62,40 @@ BEGIN TRANSACTION
 	INSERT INTO room_in_booking VALUES(SCOPE_IDENTITY(), 4, '2020-06-04', '2020-07-04')
 COMMIT
 
---9. Добавить необходимые индексы для всех таблиц 
-CREATE NONCLUSTERED INDEX [IX_booking_id_client] ON booking (id_client)
-CREATE NONCLUSTERED INDEX [IX_room_in_booking_id_booking] ON room_in_booking (id_booking)
-CREATE NONCLUSTERED INDEX [IX_room_in_booking_id_room] ON room_in_booking (id_room)
-CREATE NONCLUSTERED INDEX [IX_room_id_hotel] ON room (id_hotel)
-CREATE NONCLUSTERED INDEX [IX_room_id_room_category] ON room (id_room_category)
-
-CREATE NONCLUSTERED INDEX [IX_hotel_name] ON hotel (name)
-CREATE NONCLUSTERED INDEX [IX_room_category_name] ON room_category (name)
-CREATE NONCLUSTERED INDEX [IX_room_in_booking_checkin_date] ON room_in_booking (checkin_date)
-CREATE NONCLUSTERED INDEX [IX_room_in_booking_checkout_date] ON room_in_booking (checkout_date)
+--9. Добавить необходимые индексы для всех таблиц
+CREATE NONCLUSTERED INDEX [IX_booking_id_client] ON [dbo].[booking]
+(
+	[id_client] ASC
+) 
+CREATE NONCLUSTERED INDEX [IX_room_in_booking_id_booking] ON [dbo].[room_in_booking]
+(
+	[id_booking] ASC
+)
+CREATE NONCLUSTERED INDEX [IX_room_in_booking_id_room] ON [dbo].[room_in_booking]
+(
+	[id_room] ASC
+)
+CREATE NONCLUSTERED INDEX [IX_room_id_hotel] ON [dbo].[room]
+(
+	[id_hotel] ASC
+)
+CREATE NONCLUSTERED INDEX [IX_room_id_room_category] ON [dbo].[room]
+(
+	[id_room_category] ASC
+)
+CREATE NONCLUSTERED INDEX [IX_hotel_name] ON [dbo].[hotel]
+(
+	[name] ASC
+)
+CREATE NONCLUSTERED INDEX [IX_room_category_name] ON [dbo].[room_category]
+(
+	[name] ASC
+)
+CREATE NONCLUSTERED INDEX [IX_room_in_booking_checkin_date] ON [dbo].[room_in_booking]
+(
+	[checkin_date] ASC
+)
+CREATE NONCLUSTERED INDEX [IX_room_in_booking_checkout_date] ON [dbo].[room_in_booking]
+(
+	[checkout_date] ASC
+)
