@@ -1,9 +1,9 @@
 -- 1. Добавить внешние ключи
-ALTER TABLE booking ADD FOREIGN KEY (id_client) REFERENCES client (id_client)
-ALTER TABLE room ADD FOREIGN KEY (id_hotel) REFERENCES hotel (id_hotel)
-ALTER TABLE room ADD FOREIGN KEY (id_room_category) REFERENCES room_category (id_room_category)
-ALTER TABLE room_in_booking  ADD FOREIGN KEY (id_booking) REFERENCES booking (id_booking)
-ALTER TABLE room_in_booking  ADD FOREIGN KEY (id_room) REFERENCES room (id_room)
+ALTER TABLE booking ADD CONSTRAINT FK_booking_id_client FOREIGN KEY (id_client) REFERENCES client (id_client)
+ALTER TABLE room ADD CONSTRAINT FK_room_id_hotel FOREIGN KEY (id_hotel) REFERENCES hotel (id_hotel)
+ALTER TABLE room ADD CONSTRAINT FK_room_id_room_category FOREIGN KEY (id_room_category) REFERENCES room_category (id_room_category)
+ALTER TABLE room_in_booking ADD CONSTRAINT FK_room_in_booking_id_booking FOREIGN KEY (id_booking) REFERENCES booking (id_booking)
+ALTER TABLE room_in_booking ADD CONSTRAINT FK_room_in_booking_id_room FOREIGN KEY (id_room) REFERENCES room (id_room)
 
 -- 2. Выдать информацию о клиентах гостиницы “Космос”, проживающих в номерах категории “Люкс” на 1 апреля 2019г
 SELECT client.id_client, client.name, client.phone FROM client 
@@ -12,13 +12,13 @@ INNER JOIN room_in_booking ON booking.id_booking = room_in_booking.id_booking
 INNER JOIN room ON room.id_room = room_in_booking.id_room
 INNER JOIN hotel ON hotel.id_hotel = room.id_hotel
 INNER JOIN room_category ON room_category.id_room_category = room.id_room_category
-WHERE hotel.name = 'Космос' AND room_category.name = 'Люкс' AND room_in_booking.checkin_date <= '2019-04-01' AND room_in_booking.checkout_date >= '2019-04-01'
+WHERE hotel.name = 'Космос' AND room_category.name = 'Люкс' 
+	AND room_in_booking.checkin_date <= '2019-04-01' AND room_in_booking.checkout_date >= '2019-04-01'
 
 -- 3. Дать список свободных номеров всех гостиниц на 22 апреля
-SELECT room.id_room, room.id_hotel, room.id_room_category, room.number FROM room 
-LEFT JOIN (SELECT id_room FROM room_in_booking WHERE room_in_booking.checkin_date <= '2019-04-22' 
-AND room_in_booking.checkout_date > '2019-04-22') AS taken_room ON room.id_room = taken_room.id_room
-WHERE taken_room.id_room IS NULL
+SELECT * FROM room WHERE id_room NOT IN (SELECT id_room FROM room_in_booking 
+	WHERE checkin_date <= '2019-04-22' AND checkout_date > '2019-04-22')
+ORDER BY room.id_room;
 
 -- 4. Дать количество проживающих в гостинице “Космос” на 23 марта по каждой категории номеров
 SELECT room_category.name, COUNT(client.name) AS count_client FROM client 
@@ -63,39 +63,19 @@ BEGIN TRANSACTION
 COMMIT
 
 --9. Добавить необходимые индексы для всех таблиц
-CREATE NONCLUSTERED INDEX [IX_booking_id_client] ON [dbo].[booking]
-(
-	[id_client] ASC
-) 
-CREATE NONCLUSTERED INDEX [IX_room_in_booking_id_booking] ON [dbo].[room_in_booking]
-(
-	[id_booking] ASC
-)
-CREATE NONCLUSTERED INDEX [IX_room_in_booking_id_room] ON [dbo].[room_in_booking]
+CREATE NONCLUSTERED INDEX [IX_room_in_booking_id_room] ON [dbo].[room_in_booking] -- используется в заданиях 2, 4, 5
 (
 	[id_room] ASC
 )
-CREATE NONCLUSTERED INDEX [IX_room_id_hotel] ON [dbo].[room]
+CREATE NONCLUSTERED INDEX [IX_room_id_hotel] ON [dbo].[room] -- используется в заданиях 2, 4, 5
 (
 	[id_hotel] ASC
 )
-CREATE NONCLUSTERED INDEX [IX_room_id_room_category] ON [dbo].[room]
-(
-	[id_room_category] ASC
-)
-CREATE NONCLUSTERED INDEX [IX_hotel_name] ON [dbo].[hotel]
+CREATE NONCLUSTERED INDEX [IX_hotel_name] ON [dbo].[hotel] -- используется в заданиях 2, 4, 5, 6
 (
 	[name] ASC
 )
-CREATE NONCLUSTERED INDEX [IX_room_category_name] ON [dbo].[room_category]
+CREATE NONCLUSTERED INDEX [IX_room_category_name] ON [dbo].[room_category] -- используется в заданиях 2, 6
 (
 	[name] ASC
-)
-CREATE NONCLUSTERED INDEX [IX_room_in_booking_checkin_date] ON [dbo].[room_in_booking]
-(
-	[checkin_date] ASC
-)
-CREATE NONCLUSTERED INDEX [IX_room_in_booking_checkout_date] ON [dbo].[room_in_booking]
-(
-	[checkout_date] ASC
 )
