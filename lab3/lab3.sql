@@ -63,25 +63,25 @@
 --8.1. Написать 3 разных запроса с использованием GROUP BY + HAVING
 	SELECT id_student, COUNT(id_physical_norm) AS count_norm FROM result GROUP BY id_student HAVING COUNT(id_physical_norm) > 5; -- вывести id студентов, которые сдали больше 5 нормативов
 	SELECT name, AVG(mark) AS avg_mark FROM physical_norm GROUP BY name HAVING AVG(mark) < 4; -- вывести список нормативов, средняя оценка которых меньше 4
-	SELECT id_student, MIN(age) AS min_age FROM student GROUP BY id_student HAVING MIN(age) >= 20; -- вывести id студентов, возраст которых не меньше 20 лет
+	SELECT name, COUNT(name) AS count_same_name FROM student GROUP BY name HAVING COUNT(name) > 1; -- вывести людей, у которых совпадают имя и фамилия
 
 --9. SELECT JOIN
 --9.1. LEFT JOIN двух таблиц и WHERE по одному из атрибутов
 	SELECT student.name, health_state.medical_group FROM student
-		LEFT JOIN health_state ON health_state.id_health_state = student.id_health_state WHERE student.age > 20;
+		LEFT JOIN health_state ON health_state.id_health_state = student.id_health_state WHERE student.age > 20; -- вывести имя и мед.группу студентов, возраст которых больше 20
 --9.2. RIGHT JOIN
 	SELECT student.id_student, student.name, id_physical_norm FROM result
-		RIGHT JOIN student ON student.id_student = result.id_student WHERE student.age <= 22;
+		RIGHT JOIN student ON student.id_student = result.id_student WHERE student.age <= 22; -- вывести id норм, которые сдает студент не младше 22 лет
 --9.3. LEFT JOIN трех таблиц + WHERE по атрибуту из каждой таблицы
 	SELECT student.name, physical_norm.name, physical_norm.mark FROM result 
 	LEFT JOIN student ON student.id_student = result.id_student
 	LEFT JOIN physical_norm ON physical_norm.id_physical_norm = result.id_physical_norm
-	WHERE student.age >= 19 AND physical_norm.mark > 3 AND result.completion_date IS NOT NULL;
+	WHERE student.age >= 19 AND physical_norm.mark > 3 AND result.completion_date IS NOT NULL; -- вывести имя, название нормы и оценку студентов старше 19
 --9.4. FULL OUTER JOIN двух таблиц
-	SELECT result.id_physical_norm, gym.gym_address, result.completion_date FROM result FULL OUTER JOIN gym ON gym.id_gym = result.id_gym;
+	SELECT result.id_physical_norm, gym.gym_address, result.completion_date FROM result FULL OUTER JOIN gym ON gym.id_gym = result.id_gym; --
 
 --10. Подзапросы
 --10.1. Написать запрос с WHERE IN (подзапрос)
-SELECT name, gender, age FROM student WHERE id_health_state IN (SELECT id_health_state FROM health_state WHERE medical_group = 'Общая медицинская группа');
+SELECT name, gender, age FROM student WHERE id_health_state IN (SELECT id_health_state FROM health_state WHERE medical_group = 'Общая медицинская группа'); -- вывести данные студента из общей мед. группы
 --10.2. Написать запрос SELECT atr1, atr2, (подзапрос) FROM ...
-SELECT number, gym_address, (SELECT id_physical_norm FROM result WHERE result.id_gym = gym.id_gym) AS id_norm FROM gym;
+SELECT number, gym_address, (SELECT id_physical_norm FROM result WHERE result.id_gym = gym.id_gym) AS id_norm FROM gym; -- вывести номер, адрес и id нормы, которые проводятся в спортзале
