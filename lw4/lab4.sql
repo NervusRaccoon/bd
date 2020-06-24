@@ -17,20 +17,20 @@ WHERE hotel.name = 'Космос' AND room_category.name = 'Люкс'
 
 -- 3. Дать список свободных номеров всех гостиниц на 22 апреля
 SELECT * FROM room WHERE id_room NOT IN (SELECT id_room FROM room_in_booking 
-	WHERE checkin_date <= '2019-04-22' AND checkout_date > '2019-04-22')
+WHERE checkin_date <= '2019-04-22' AND checkout_date > '2019-04-22' AND checkin_date IS NOT NULL)
 ORDER BY room.id_room;
 
 -- 4. Дать количество проживающих в гостинице “Космос” на 23 марта по каждой категории номеров
-SELECT room_category.name, COUNT(client.name) AS count_client FROM client 
-INNER JOIN booking ON booking.id_client = client.id_client
-INNER JOIN room_in_booking ON booking.id_booking = room_in_booking.id_booking
-INNER JOIN room ON room.id_room = room_in_booking.id_room
-INNER JOIN hotel ON hotel.id_hotel = room.id_hotel
+SELECT room_category.id_room_category, room_category.name, COUNT(room_category.id_room_category) AS count_roomer
+FROM hotel
+INNER JOIN room ON room.id_hotel = hotel.id_hotel
 INNER JOIN room_category ON room_category.id_room_category = room.id_room_category
-WHERE hotel.name = 'Космос' AND room_in_booking.checkin_date <= '2019-03-23' AND room_in_booking.checkout_date > '2019-03-23'
-GROUP BY room_category.name
+INNER JOIN room_in_booking ON room_in_booking.id_room = room.id_room
+WHERE hotel.name = 'Космос' AND checkin_date <= '2019-03-23' AND checkout_date > '2019-03-23'
+GROUP BY room_category.id_room_category, room_category.name
 
 -- 5. Дать список последних проживавших клиентов по всем комнатам гостиницы “Космос”, выехавшим в апреле с указанием даты выезда
+--1 способ - создание новой таблицы через подзапросы
 SELECT client.name, room.number, room_in_booking.checkout_date FROM client
 INNER JOIN booking ON booking.id_client = client.id_client
 INNER JOIN room_in_booking ON room_in_booking.id_booking = booking.id_booking
@@ -40,6 +40,22 @@ INNER JOIN (SELECT room_in_booking.id_room, MAX(room_in_booking.checkout_date) A
 AS room_in_booking GROUP BY room_in_booking.id_room) AS last_taken_room ON last_taken_room.id_room = room_in_booking.id_room
 INNER JOIN hotel ON hotel.id_hotel = room.id_hotel
 WHERE hotel.name = 'Космос' AND room_in_booking.id_room = last_taken_room.id_room AND last_taken_room.last_date = room_in_booking.checkout_date
+
+--2 способ - создание новой таблицы(обобщенного табличного выражения(ОТВ)) отдельно через WITH
+WITH last_taken_room AS (SELECT room_in_booking.id_room, MAX(room_in_booking.checkout_date) AS max_date
+FROM room_in_booking
+INNER JOIN room ON room.id_room = room_in_booking.id_room
+INNER JOIN hotel ON room.id_hotel = hotel.id_hotel
+WHERE hotel.name = 'Космос'
+AND checkout_date BETWEEN '2019-04-01' AND '2019-04-30'
+GROUP BY room_in_booking.id_room)
+
+SELECT last_taken_room.id_room, client.name, MAX(last_taken_room.max_date) AS last_date FROM last_taken_room
+INNER JOIN room_in_booking ON room_in_booking.id_room = last_taken_room.id_room AND room_in_booking.checkout_date = last_taken_room.max_date
+INNER JOIN booking ON booking.id_booking = room_in_booking.id_booking
+INNER JOIN client ON booking.id_client = client.id_client
+GROUP BY last_taken_room.id_room, client.name
+ORDER BY last_taken_room.id_room
 
 --6. Продлить на 2 дня дату проживания в гостинице “Космос” всем клиентам комнат категории “Бизнес”, которые заселились 10 мая
 UPDATE room_in_booking
@@ -63,13 +79,13 @@ BEGIN TRANSACTION
 COMMIT
 
 --9. Добавить необходимые индексы для всех таблиц
-CREATE NONCLUSTERED INDEX [IX_room_in_booking_id_room] ON [dbo].[room_in_booking] -- используется в заданиях 2, 4, 5
+CREATE NONCLUSTERED INDEX [IX_room_in_booking_id_room_id_booking] ON [dbo].[room_in_booking] -- используется в заданиях 2, 4, 5
 (
-	[id_room] ASC
+	[id_room] ASC, [id_booking] ASC
 )
-CREATE NONCLUSTERED INDEX [IX_room_id_hotel] ON [dbo].[room] -- используется в заданиях 2, 4, 5
+CREATE NONCLUSTERED INDEX [IX_room_id_hotel_id_room_category] ON [dbo].[room] -- используется в заданиях 2, 4, 5
 (
-	[id_hotel] ASC
+	[id_hotel] ASC, [id_room_category] ASC
 )
 CREATE NONCLUSTERED INDEX [IX_hotel_name] ON [dbo].[hotel] -- используется в заданиях 2, 4, 5, 6
 (
@@ -79,3 +95,9 @@ CREATE NONCLUSTERED INDEX [IX_room_category_name] ON [dbo].[room_category] -- и
 (
 	[name] ASC
 )
+CREATE NONCLUSTERED INDEX [IX_room_in_booking_checkin_date_checkout_date_id_room] ON [dbo].[room_in_booking] -- используется в заданиях 3, 4
+(
+
+	[checkin_date] ASC, [checkout_date] ASC
+
+)INCLUDE(id_room)
