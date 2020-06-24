@@ -101,3 +101,9 @@ CREATE NONCLUSTERED INDEX [IX_room_in_booking_checkin_date_checkout_date_id_room
 	[checkin_date] ASC, [checkout_date] ASC
 
 )INCLUDE(id_room)
+CREATE NONCLUSTERED INDEX [IX_room_in_booking_checkout_date_id_room] ON [dbo].[room_in_booking] -- используется в задании 5
+(
+
+	[checkout_date] ASC
+
+)INCLUDE(id_room)
